@@ -1,0 +1,19 @@
+body {
+    background-color: #dbdbdb;
+}
+
+input[type="submit"] {
+    background-color: #565555;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover {
+    background-color: #2b2b2b;
+}
+
+#repoForm {
+    display: flex;
+    justify-content: center;
+    margin: 0 auto; 
+}

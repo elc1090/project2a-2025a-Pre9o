@@ -1,64 +1,99 @@
-// Get the GitHub username input form
-const gitHubForm = document.getElementById('gitHubForm');
-
 // Listen for submissions on GitHub username input form
 gitHubForm.addEventListener('submit', (e) => {
-
-    // Prevent default form submission action
     e.preventDefault();
 
-    // Get the GitHub username input field on the DOM
     let usernameInput = document.getElementById('usernameInput');
+    let gitHubUsername = usernameInput.value.trim();
 
-    // Get the value of the GitHub username input field
-    let gitHubUsername = usernameInput.value;
+    if (!gitHubUsername) {
+        alert('Please enter a GitHub username.');
+        return;
+    }
 
-    // Run GitHub API function, passing in the GitHub username
     requestUserRepos(gitHubUsername)
-        .then(response => response.json()) // parse response into json
-        .then(data => {
-            // update html with data from github
-            for (let i in data) {
-                // Get the ul with id of userRepos
-
-                if (data.message === "Not Found") {
-                    let ul = document.getElementById('userRepos');
-
-                    // Create variable that will create li's to be added to ul
-                    let li = document.createElement('li');
-
-                    // Add Bootstrap list item class to each li
-                    li.classList.add('list-group-item')
-                    // Create the html markup for each li
-                    li.innerHTML = (`
-                <p><strong>No account exists with username:</strong> ${gitHubUsername}</p>`);
-                    // Append each li to the ul
-                    ul.appendChild(li);
-                } else {
-
-                    let ul = document.getElementById('userRepos');
-
-                    // Create variable that will create li's to be added to ul
-                    let li = document.createElement('li');
-
-                    // Add Bootstrap list item class to each li
-                    li.classList.add('list-group-item')
-
-                    // Create the html markup for each li
-                    li.innerHTML = (`
-                <p><strong>Repo:</strong> ${data[i].name}</p>
-                <p><strong>Description:</strong> ${data[i].description}</p>
-                <p><strong>URL:</strong> <a href="${data[i].html_url}">${data[i].html_url}</a></p>
-            `);
-
-                    // Append each li to the ul
-                    ul.appendChild(li);
-                }
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} - ${response.statusText}`);
             }
+            return response.json();
         })
-})
+        .then(data => {
+            let repoSelect = document.getElementById('repoSelect');
+            repoSelect.innerHTML = '<option value="">Select a repository</option>';
+
+            if (data.length === 0) {
+                alert(`No repositories found for user: ${gitHubUsername}`);
+                return;
+            }
+
+            data.forEach(repo => {
+                let option = document.createElement('option');
+                option.value = repo.name;
+                option.textContent = repo.name;
+                repoSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error(error);
+            alert('An error occurred while fetching repositories. Please try again.');
+        });
+});
+
+// Listen for changes in the repository dropdown
+repoSelect.addEventListener('change', (e) => {
+    let selectedRepo = e.target.value;
+    let usernameInput = document.getElementById('usernameInput');
+    let gitHubUsername = usernameInput.value.trim();
+
+    if (!selectedRepo) {
+        alert('Please select a repository.');
+        return;
+    }
+
+    requestRepoCommits(gitHubUsername, selectedRepo)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} - ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            let userRepos = document.getElementById('userRepos');
+            userRepos.innerHTML = '';
+
+            if (data.length === 0) {
+                let li = document.createElement('li');
+                li.classList.add('list-group-item');
+                li.textContent = `No commits found for repository: ${selectedRepo}`;
+                userRepos.appendChild(li);
+                return;
+            }
+
+            data.forEach(commit => {
+                let li = document.createElement('li');
+                li.classList.add('list-group-item');
+                li.innerHTML = `
+                    <p><strong>Message:</strong> ${commit.commit.message}</p>
+                    <p><strong>Date:</strong> ${new Date(commit.commit.author.date).toLocaleString()}</p>
+                `;
+                userRepos.appendChild(li);
+            });
+        })
+        .catch(error => {
+            console.error(error);
+            alert('An error occurred while fetching commits. Please try again.');
+        });
+});
 
 function requestUserRepos(username) {
-    // create a variable to hold the `Promise` returned from `fetch`
-    return Promise.resolve(fetch(`https://api.github.com/users/${username}/repos`));
+    return fetch(`https://api.github.com/users/${username}/repos`);
+}
+
+function requestRepoCommits(username, repo) {
+    return fetch(`https://api.github.com/repos/${username}/${repo}/commits`);
+}
+
+function requestUserRepos(username) {
+    // Fetch the user's repositories from the GitHub API
+    return fetch(`https://api.github.com/users/${username}/repos`);
 }
