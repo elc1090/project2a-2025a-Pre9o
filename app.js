@@ -39,7 +39,6 @@ gitHubForm.addEventListener('submit', (e) => {
         });
 });
 
-// Listen for changes in the repository dropdown
 repoSelect.addEventListener('change', (e) => {
     let selectedRepo = e.target.value;
     let usernameInput = document.getElementById('usernameInput');
@@ -50,18 +49,37 @@ repoSelect.addEventListener('change', (e) => {
         return;
     }
 
-    requestRepoCommits(gitHubUsername, selectedRepo)
+    fetch(`https://api.github.com/repos/${gitHubUsername}/${selectedRepo}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`Error: ${response.status} - ${response.statusText}`);
             }
             return response.json();
         })
-        .then(data => {
+        .then(repoData => {
             let userRepos = document.getElementById('userRepos');
-            userRepos.innerHTML = '';
+            userRepos.innerHTML = `
+                <div class="repo-card">
+                    <h3>${repoData.name}</h3>
+                    <p>${repoData.description || 'No description available'}</p>
+                    <p><strong>Stars:</strong> ${'&#11088;'.repeat(repoData.stargazers_count)}</p>
+                </div>
+                <h4>Commits:</h4>
+                <ul class="commit-list"></ul>
+`;
 
-            if (data.length === 0) {
+            return fetch(`https://api.github.com/repos/${gitHubUsername}/${selectedRepo}/commits`);
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} - ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(commitData => {
+            let userRepos = document.getElementById('userRepos');
+
+            if (commitData.length === 0) {
                 let li = document.createElement('li');
                 li.classList.add('list-group-item');
                 li.textContent = `No commits found for repository: ${selectedRepo}`;
@@ -69,7 +87,7 @@ repoSelect.addEventListener('change', (e) => {
                 return;
             }
 
-            data.forEach(commit => {
+            commitData.forEach(commit => {
                 let li = document.createElement('li');
                 li.classList.add('list-group-item');
                 li.innerHTML = `
@@ -81,7 +99,7 @@ repoSelect.addEventListener('change', (e) => {
         })
         .catch(error => {
             console.error(error);
-            alert('An error occurred while fetching commits. Please try again.');
+            alert('An error occurred while fetching repository details or commits. Please try again.');
         });
 });
 
@@ -94,6 +112,5 @@ function requestRepoCommits(username, repo) {
 }
 
 function requestUserRepos(username) {
-    // Fetch the user's repositories from the GitHub API
     return fetch(`https://api.github.com/users/${username}/repos`);
 }
