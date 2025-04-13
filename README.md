@@ -23,7 +23,6 @@ Rafael Carneiro Pregardier
 
 #### Bastidores
 
-
 Para o desenvolvimento do trabalho, primeiro consultei o tutorial que já estava no repositório, para entender como funcionavam as requisições mais básicas. Após essa etapa, busquei o tutorial citado acima para aprender sobre requisições mais elaboradas, métodos de consulta, etc. Por último, apenas dei uma modificada no CSS da página, para que ficasse mais "parecido" com algo oficial do GitHub.
 
 
