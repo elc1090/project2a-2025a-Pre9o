@@ -1,4 +1,3 @@
-// Listen for submissions on GitHub username input form
 gitHubForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
